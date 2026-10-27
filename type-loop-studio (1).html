@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Type Loop Studio</title>
+<style>
+:root{--bg:#ececea;--pn:#fff;--tx:#161616;--mu:#80807c;--bd:#dcdcd8;--ac:#161616;--ac2:#fff}
+@media(prefers-color-scheme:dark){:root{--bg:#0e0e10;--pn:#18181b;--tx:#ececec;--mu:#8b8b92;--bd:#2b2b30;--ac:#ececec;--ac2:#111}}
+*{box-sizing:border-box}
+body{margin:0;font:13px/1.4 system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--tx);height:100vh;display:grid;grid-template-columns:1fr 350px}
+main{display:flex;flex-direction:column;gap:10px;padding:14px;min-width:0;min-height:0}
+#st{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+canvas#cv{box-shadow:0 10px 40px #0004;border-radius:6px}
+#bar{display:flex;gap:10px;align-items:center}
+#bar input{flex:1}
+aside{background:var(--pn);border-left:1px solid var(--bd);overflow:auto;padding:4px 14px 20px}
+details{border-bottom:1px solid var(--bd);padding:8px 0}
+summary{font-weight:600;cursor:pointer;padding:4px 0}
+.r{display:grid;grid-template-columns:96px 1fr 46px;gap:8px;align-items:center;margin:6px 0}
+.r output{color:var(--mu);font-size:11px;text-align:right}
+.ax{margin:8px 0;padding:6px 8px;border:1px solid var(--bd);border-radius:8px}
+.ax .g{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+.ax small{color:var(--mu);font-size:11px}
+input[type=range]{width:100%;accent-color:var(--ac)}
+input[type=number],select,textarea{width:100%;background:transparent;color:inherit;border:1px solid var(--bd);border-radius:6px;padding:5px 7px;font:inherit}
+textarea{resize:vertical;font-size:15px}
+button{background:var(--ac);color:var(--ac2);border:0;border-radius:7px;padding:8px 12px;font:600 13px system-ui;cursor:pointer}
+button.s{background:transparent;color:var(--tx);border:1px solid var(--bd)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.col{display:flex;align-items:center;gap:6px;font-size:12px}
+input[type=color]{width:34px;height:26px;border:1px solid var(--bd);border-radius:5px;padding:0;background:none}
+#pal{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+#pal button{width:54px;height:26px;padding:0;border:1px solid var(--bd);border-radius:6px;display:flex;overflow:hidden;background:none}
+#pal i{flex:1}
+.up{display:block;margin-top:6px;border:1px dashed var(--bd);border-radius:8px;padding:8px;text-align:center;cursor:pointer;color:var(--mu)}
+.hint{color:var(--mu);font-size:11px;margin:4px 0}
+@media(max-width:820px){body{display:block;height:auto}main{height:78vh}aside{border:0}}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute"><filter id="goo" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feGaussianBlur id="gb" stdDeviation="5"/><feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -10"/></filter><filter id="goo2" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feGaussianBlur id="gb2" stdDeviation="6"/><feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -10"/></filter></svg>
+
+<main>
+  <div id="st"><canvas id="cv" width="720" height="900"></canvas></div>
+  <div id="bar"><button id="pp" style="width:84px">⏸ Pause</button><input id="sc" type="range" min="0" max="1000" value="0"><span id="tl" style="width:92px;text-align:right;color:var(--mu)"></span></div>
+</main>
+
+<aside id="panel">
+<details open><summary>Chữ &amp; Font</summary>
+  <textarea id="txt" rows="2">SC25</textarea>
+  <div class="r"><label>Font</label><select id="fs" style="grid-column:span 2"></select></div>
+  <label class="up">⬆ Upload font (.ttf .otf .woff .woff2)<input id="up" type="file" accept=".ttf,.otf,.woff,.woff2" hidden></label>
+  <div class="hint" id="fi"></div>
+  <div id="sz"></div>
+  <label class="col"><input type="checkbox" id="fit" checked> Tự thu nhỏ nếu chữ rộng quá khung</label>
+</details>
+
+<details open><summary>Animation loop</summary>
+  <div class="r"><label>Thời lượng (s)</label><input id="durS" type="range" min="5" max="30" step="0.5" value="5"><input id="dur" type="number" min="0.5" step="0.5" value="5" style="padding:3px"></div>
+  <div class="hint">Kéo 5–30s hoặc gõ số bất kỳ vào ô bên phải.</div>
+  <div id="an"></div>
+  <div class="r"><label>Kiểu sóng</label><select id="shape" style="grid-column:span 2"><option value="sine">Sine (mượt)</option><option value="ease">Ease (nghỉ ở 2 đầu)</option><option value="linear">Linear (tam giác)</option><option value="snap">Snap (giật nhanh)</option></select></div>
+</details>
+
+<details open><summary>Trục Variable Font &amp; Transform</summary>
+  <div class="hint">Tick = animate từ giá trị trái → phải. Không tick = giữ giá trị trái.</div>
+  <div id="axes"></div>
+</details>
+
+<details open><summary>Viền &amp; Gooey</summary><div id="st2"></div></details>
+
+<details open><summary>Màu</summary>
+  <div class="cols" id="cc"></div>
+  <div id="an2"></div>
+  <div id="pal"></div>
+</details>
+
+<details open><summary>Xuất</summary>
+  <div class="r"><label>Khung</label><select id="sz2" style="grid-column:span 2"></select></div>
+  <div class="r"><label>FPS</label><select id="fps" style="grid-column:span 2"><option>30</option><option>60</option></select></div>
+  <div class="r"><label>Số vòng loop</label><input id="loops" type="number" min="1" max="20" value="1" style="grid-column:span 2"></div>
+  <div class="r"><label>Bitrate Mbps</label><input id="mbps" type="number" min="2" max="60" value="12" style="grid-column:span 2"></div>
+  <div class="cols"><button id="png">Xuất PNG</button><button id="rec">⏺ Xuất video</button></div>
+  <div class="hint">Video ghi thời gian thực nên mất đúng bằng độ dài loop. Chrome → MP4/WebM, Firefox → WebM.</div>
+</details>
+</aside>
+
+<script>
+const $=i=>document.getElementById(i),g=i=>+$(i).value,cv=$('cv'),cx=cv.getContext('2d');
+const mk=()=>{const c=document.createElement('canvas');c.style.cssText='position:fixed;left:-99999px;top:0';document.body.appendChild(c);return c};
+const cA=mk(),cB=mk(),cC=mk(),xA=cA.getContext('2d'),xB=cB.getContext('2d'),xC=cC.getContext('2d');
+const R=(id,l,mn,mx,st,v)=>`<div class="r"><label for="${id}">${l}</label><input type="range" id="${id}" min="${mn}" max="${mx}" step="${st}" value="${v}"><output id="${id}_o">${v}</output></div>`;
+$('sz').innerHTML=R('size','Cỡ chữ',20,600,1,210)+R('lh','Dãn dòng',.6,1.8,.01,1.05);
+$('an').innerHTML=R('cyc','Số nhịp / loop',1,8,1,1)+R('stag','Lệch pha chữ',-1,1,.01,.08);
+$('an2').innerHTML=R('hue','Xoay hue / loop°',0,720,5,0);
+$('st2').innerHTML=R('rO','Dày viền (px)',0,60,1,16)+R('rH','Dày halo (px)',0,40,1,10)+R('goo','Liquid viền (merge)',0,40,.5,14)+R('gf','Liquid chữ (dính)',0,30,.5,6);
+const FONTS={
+'Anybody':{q:'Anybody:wdth,wght@50..150,100..900',ax:[['wdth',50,150,100],['wght',100,900,400]]},
+'Bricolage Grotesque':{q:'Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800',ax:[['opsz',12,96,14],['wdth',75,100,100],['wght',200,800,400]]},
+'Roboto Flex':{q:'Roboto+Flex:wdth,wght@25..151,100..1000',ax:[['wdth',25,151,100],['wght',100,1000,400]]},
+'Archivo':{q:'Archivo:wdth,wght@62..125,100..900',ax:[['wdth',62,125,100],['wght',100,900,400]]},
+'Fraunces':{q:'Fraunces:opsz,wght,SOFT@9..144,100..900,0..100',ax:[['opsz',9,144,14],['wght',100,900,400],['SOFT',0,100,0]]},
+'Recursive':{q:'Recursive:wght,CASL,MONO@300..1000,0..1,0..1',ax:[['wght',300,1000,400],['CASL',0,1,0],['MONO',0,1,0]]},
+'Climate Crisis':{q:'Climate+Crisis:YEAR@1979..2050',ax:[['YEAR',1979,2050,1979]]},
+'Unbounded':{q:'Unbounded:wght@200..900',ax:[['wght',200,900,400]]}};
+$('fs').innerHTML=Object.keys(FONTS).map(n=>`<option>${n}</option>`).join('');
+let font={name:'Anybody',axes:FONTS.Anybody.ax},AX=[];
+const PS=[{id:'_sx',n:'Stretch X %',mn:40,mx:220,f:100,t:125,on:1},{id:'_ls',n:'Spacing px',mn:-60,mx:120,f:-14,t:4,on:1},{id:'_dy',n:'Bounce Y px',mn:-120,mx:120,f:0,t:25,on:0},{id:'_rot',n:'Rotate °',mn:-45,mx:45,f:0,t:8,on:0}];
+function buildAxes(){
+ AX=[...font.axes.map(([tag,mn,mx,df])=>{const r=mx-mn,on=tag=='wdth'||tag=='wght';return{id:'x_'+tag,tag,fa:1,n:tag+' (variable axis)',mn,mx,f:on?+(mn+r*.15).toFixed(2):df,t:on?+(mx-r*.05).toFixed(2):mx,on}}),...PS];
+ AX.forEach(a=>a.st=(a.mx-a.mn)>10?1:.01);
+ $('axes').innerHTML=AX.map(a=>`<div class="ax"><label class="col"><input type="checkbox" id="${a.id}_on" ${a.on?'checked':''}> <b>${a.n}</b></label><div class="g"><input type="range" id="${a.id}_a" min="${a.mn}" max="${a.mx}" step="${a.st}" value="${a.f}"><input type="range" id="${a.id}_b" min="${a.mn}" max="${a.mx}" step="${a.st}" value="${a.t}"></div><small id="${a.id}_o"></small></div>`).join('');
+ AX.forEach(a=>axo(a));
+}
+const axo=a=>$(a.id+'_o').textContent=$(a.id+'_a').value+'  →  '+$(a.id+'_b').value;
+$('axes').oninput=e=>{const a=AX.find(a=>e.target.id.startsWith(a.id+'_'));a&&axo(a)};
+$('panel').addEventListener('input',e=>{const o=$(e.target.id+'_o');if(o&&e.target.type=='range'&&!e.target.id.includes('_'))o.textContent=e.target.value});
+// fonts
+async function useGoogle(n){const f=FONTS[n];if(!f.p)f.p=new Promise(r=>{const l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.q+'&display=swap';l.onload=l.onerror=r;document.head.appendChild(l)});
+ await f.p;try{await document.fonts.load('400 40px "'+n+'"')}catch(e){}
+ font={name:n,axes:f.ax};buildAxes();$('fi').textContent='Trục: '+f.ax.map(a=>a[0]).join(', ')}
+const UPF={};
+$('fs').onchange=e=>{const n=e.target.value;if(FONTS[n])useGoogle(n);else if(UPF[n]){font=UPF[n];buildAxes();$('fi').textContent='Trục: '+(font.axes.map(a=>a[0]).join(', ')||'font tĩnh')}};
+const tg=s=>String.fromCharCode(...[0,1,2,3].map(i=>s.getUint8(i)));
+function fvar(buf){const d=new DataView(buf);let o=0;if(tg(new DataView(buf,0,4))=='ttcf')o=d.getUint32(12);const n=d.getUint16(o+4);
+ for(let i=0;i<n;i++){const p=o+12+i*16;if(tg(new DataView(buf,p,4))=='fvar'){const t=d.getUint32(p+8),off=d.getUint16(t+4),cnt=d.getUint16(t+8),sz=d.getUint16(t+10),r=[];
+  for(let k=0;k<cnt;k++){const a=t+off+k*sz;r.push([tg(new DataView(buf,a,4)),d.getInt32(a+4)/65536,d.getInt32(a+12)/65536,d.getInt32(a+8)/65536])}return r}}return[]}
+let upn=0;
+$('up').onchange=async e=>{const f=e.target.files[0];if(!f)return;const buf=await f.arrayBuffer();let ax=[],note='';
+ try{ax=fvar(buf)}catch(_){}
+ if(!ax.length&&/\.woff2?$/i.test(f.name)){ax=[['wght',100,900,400],['wdth',50,200,100]];note=' (woff/woff2 không đọc được trục — dùng wght/wdth mặc định, có thể không tác dụng nếu font không có)'}
+ const nm='Up'+(++upn),ff=new FontFace(nm,buf,{weight:'1 1000',stretch:'25% 200%'});
+ try{await ff.load()}catch(_){alert('Không đọc được font này');return}
+ document.fonts.add(ff);const op=document.createElement('option');op.textContent=nm;op.value=nm;op.label='⬆ '+f.name;$('fs').appendChild(op);$('fs').value=nm;
+ font=UPF[nm]={name:nm,axes:ax};buildAxes();$('fi').textContent=ax.length?'Trục: '+ax.map(a=>a[0]).join(', ')+note:'Font tĩnh (không có trục variable)'};
+// colors
+const CL=[['c0','Nền','#bffc00'],['c1','Chữ','#e3e3e3'],['c2','Viền','#fc0000'],['c3','Halo','#fdc8f5']];
+$('cc').innerHTML=CL.map(c=>`<label class="col"><input type="color" id="${c[0]}" value="${c[2]}">${c[1]}</label>`).join('');
+const PAL={'Lime Pop':['#bffc00','#e3e3e3','#fc0000','#fdc8f5'],'Candy':['#ffd1e8','#ffffff','#ff2e93','#fff0a8'],'Deep Sea':['#0a1a3f','#f5f5f5','#1f6fff','#7cc4ff'],'Mono':['#ececec','#ffffff','#111111','#bdbdbd'],'Sunset':['#2b0a3d','#ffe29a','#ff5e3a','#ff9ebb'],'Mint':['#0f3d2e','#eafff4','#00c27a','#9bffd0'],'Retro':['#f4e3c1','#fffaf0','#e4572e','#f3a712'],'Violet':['#1a1033','#ffffff','#8a2be2','#d6b3ff'],'Tangerine':['#ff7a00','#fff4e0','#1b1b1b','#ffd08a']};
+$('pal').innerHTML=Object.entries(PAL).map(([n,c])=>`<button class="s" title="${n}" data-p="${n}">${c.map(x=>`<i style="background:${x}"></i>`).join('')}</button>`).join('');
+$('pal').onclick=e=>{const b=e.target.closest('button');if(b)PAL[b.dataset.p].forEach((x,i)=>$('c'+i).value=x)};
+function hs(h,d){if(!d)return h;const r=parseInt(h.slice(1,3),16)/255,q=parseInt(h.slice(3,5),16)/255,b=parseInt(h.slice(5,7),16)/255,mx=Math.max(r,q,b),mn=Math.min(r,q,b),l=(mx+mn)/2,df=mx-mn;let H=0,s=0;
+ if(df){s=df/(1-Math.abs(2*l-1));H=mx==r?((q-b)/df%6):mx==q?(b-r)/df+2:(r-q)/df+4;H*=60}return`hsl(${(((H+d)%360)+360)%360} ${s*100}% ${l*100}%)`}
+// size presets
+const SZ=[[720,900,'720×900 (4:5)'],[1080,1350,'1080×1350 (4:5)'],[1080,1080,'1080×1080 (1:1)'],[1920,1080,'1920×1080 (16:9)'],[1080,1920,'1080×1920 (9:16)'],[1440,1800,'1440×1800 (4:5)']];
+$('sz2').innerHTML=SZ.map((s,i)=>`<option value="${i}">${s[2]}</option>`).join('');
+function resize(){const s=SZ[g('sz2')];[cv,cA,cB,cC].forEach(c=>{c.width=s[0];c.height=s[1]});fitView()}
+function fitView(){const b=$('st'),W=cv.width,H=cv.height,k=Math.min((b.clientWidth-4)/W,(b.clientHeight-4)/H);cv.style.width=W*k+'px';cv.style.height=H*k+'px'}
+$('sz2').onchange=resize;addEventListener('resize',fitView);
+// animation
+function wave(x){const f=x-Math.floor(x),t=1-Math.abs(2*f-1),s=document.getElementById('shape').value,sn=.5-.5*Math.cos(2*Math.PI*x);
+ return s=='sine'?sn:s=='linear'?t:s=='ease'?t*t*t*(t*(t*6-15)+10):sn**3}
+let tg2=0;
+function F(c,o,size){c.canvas.style.fontVariationSettings=o.fv||'normal';tg2^=1;c.font=`${o.wt} ${(size+tg2*.001).toFixed(3)}px "${font.name}",sans-serif`;c.textBaseline='middle';c.textAlign='left'}
+function paint(c,k,W,H,size,fn,clr){c.lineJoin='round';c.miterLimit=2;if(clr){c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,W,H)}
+ for(const o of G){c.setTransform(k,0,0,k,W/2*(1-k),H/2*(1-k));c.translate(o.x,o.y);c.rotate(o.rot);c.scale(o.sx,1);F(c,o,size);fn(c,o)}}
+let G=[];
+function draw(t){
+ const W=cv.width,H=cv.height,u=W/720,T=g('dur'),cyc=g('cyc'),st=g('stag'),ph=(t%T)/T,size=g('size')*u,lh=size*g('lh');
+ const C=['c0','c1','c2','c3'].map(i=>hs($(i).value,g('hue')*ph));
+ const cfg=AX.map(a=>({id:a.id,tag:a.tag,fa:a.fa,on:$(a.id+'_on').checked,A:g(a.id+'_a'),B:g(a.id+'_b')}));
+ const lines=$('txt').value.split('\n'),rows=[];let i=0;
+ for(const ln of lines){const r=[];for(const ch of ln){const k=wave(ph*cyc-(i++)*st),V={};cfg.forEach(c=>V[c.id]=c.on?c.A+(c.B-c.A)*k:c.A);
+  const o={ch,fv:cfg.filter(c=>c.fa).map(c=>`"${c.tag}" ${V[c.id].toFixed(2)}`).join(','),wt:V.x_wght!=null?Math.round(V.x_wght):400,sx:V._sx/100,ls:V._ls*u,dy:V._dy*u,rot:V._rot*Math.PI/180};
+  F(cx,o,size);o.adv=cx.measureText(ch).width;o.a=o.adv*o.sx+o.ls;r.push(o)}rows.push(r)}
+ const wd=rows.map(r=>r.reduce((s,o)=>s+o.a,0)-(r.length?r[r.length-1].ls:0)),mw=Math.max(0,...wd),k=$('fit').checked&&mw>W*.92?W*.92/mw:1;
+ G=[];rows.forEach((r,li)=>{let x=W/2-wd[li]/2;const y=H/2-rows.length*lh/2+lh*(li+.5);r.forEach(o=>{o.x=x+o.adv*o.sx/2;o.y=y+o.dy;x+=o.a;G.push(o)})});
+ const rO=g('rO')*u,rH=g('rH')*u,goo=g('goo')*u,gf=g('gf')*u;
+ paint(xA,k,W,H,size,(c,o)=>{c.lineWidth=2*(rO+rH);c.strokeStyle=C[3];c.strokeText(o.ch,-o.adv/2,0)},1);
+ paint(xB,k,W,H,size,(c,o)=>{c.lineWidth=2*rO;c.strokeStyle=C[2];c.strokeText(o.ch,-o.adv/2,0)},1);
+ cx.setTransform(1,0,0,1,0,0);cx.fillStyle=C[0];cx.fillRect(0,0,W,H);
+ if(goo>0){$('gb').setAttribute('stdDeviation',goo);cx.filter='url(#goo)'}
+ if(rH>0)cx.drawImage(cA,0,0);if(rO>0)cx.drawImage(cB,0,0);cx.filter='none';
+ const fl=(c,o)=>{c.fillStyle=C[1];c.fillText(o.ch,-o.adv/2,0)};
+ if(gf>0){paint(xC,k,W,H,size,fl,1);$('gb2').setAttribute('stdDeviation',gf);cx.filter='url(#goo2)';cx.drawImage(cC,0,0);cx.filter='none'}
+ else paint(cx,k,W,H,size,fl,0);
+ cx.setTransform(1,0,0,1,0,0);
+}
+// loop / transport
+let tm=0,play=true,last=performance.now(),recording=false,rt0=0,recT=0,mr=null,curT=5;
+function tick(now){const dt=Math.min(.1,(now-last)/1000);last=now;const T=g('dur');
+ if(recording){const e=(now-rt0)/1000;tm=e%T;$('rec').textContent='⏺ '+Math.min(99,Math.round(e/recT*100))+'% …';if(e>=recT){recording=false;mr.stop()}}
+ else if(play)tm=(tm+dt)%T;
+ draw(tm);$('sc').value=tm/T*1000;$('tl').textContent=tm.toFixed(1)+' / '+(+T).toFixed(1)+'s';requestAnimationFrame(tick)}
+$('pp').onclick=()=>{play=!play;$('pp').textContent=play?'⏸ Pause':'▶ Play'};
+$('sc').oninput=e=>{tm=e.target.value/1000*g('dur')};
+addEventListener('keydown',e=>{if(e.code=='Space'&&!/TEXTAREA|INPUT|SELECT/.test(e.target.tagName)){e.preventDefault();$('pp').click()}});
+function setDur(v){v=Math.max(.5,+v||5);tm=tm/curT*v;curT=v;$('dur').value=v;$('durS').value=Math.min(30,Math.max(5,v))}
+$('durS').oninput=e=>setDur(e.target.value);$('dur').onchange=e=>setDur(e.target.value);
+// export
+const dl=(b,n)=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)};
+$('png').onclick=()=>{draw(tm);cv.toBlob(b=>dl(b,'type-frame.png'))};
+$('rec').onclick=()=>{if(recording)return;if(!window.MediaRecorder)return alert('Trình duyệt không hỗ trợ MediaRecorder');
+ const mt=['video/mp4;codecs=avc1','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(m=>MediaRecorder.isTypeSupported(m));
+ mr=new MediaRecorder(cv.captureStream(g('fps')),{mimeType:mt,videoBitsPerSecond:g('mbps')*1e6});const ch=[];
+ mr.ondataavailable=e=>e.data.size&&ch.push(e.data);
+ mr.onstop=()=>{dl(new Blob(ch,{type:mt}),'type-loop.'+(mt.includes('mp4')?'mp4':'webm'));$('rec').textContent='⏺ Xuất video'};
+ recT=g('dur')*Math.max(1,g('loops'));tm=0;rt0=performance.now();recording=true;mr.start()};
+// init
+buildAxes();resize();useGoogle('Anybody');new ResizeObserver(fitView).observe($('st'));requestAnimationFrame(tick);
+</script></body></html>
